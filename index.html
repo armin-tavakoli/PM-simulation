@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wave Polarization</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=STIX+Two+Text:ital@0;1&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--page:#fff;--stage:#f3f5fa;--ink:#0a0f24;--mute:#5a6379;--line:#dde2ee;--wave:#2b62f0;--label:#0b1b5e;--gray:#8a93a8;--dot:#0a0f24;--cx:#18a9e0;--cy:#0b1b5e;--btn:#fff;--hl:#2b62f0;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#050d2a;--stage:#0a1640;--ink:#f3f6ff;--mute:#9fabcc;--line:#1c2a5c;--wave:#4d8dff;--label:#a9bcff;--gray:#8d98b8;--dot:#e8eeff;--cx:#35c6f0;--cy:#a9bcff;--btn:#101c4a;--hl:#2b62f0;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#050d2a;--stage:#0a1640;--ink:#f3f6ff;--mute:#9fabcc;--line:#1c2a5c;--wave:#4d8dff;--label:#a9bcff;--gray:#8d98b8;--dot:#e8eeff;--cx:#35c6f0;--cy:#a9bcff;--btn:#101c4a;--hl:#2b62f0;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 32px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 16px}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(250px,1fr);gap:16px;margin-bottom:16px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.box{background:var(--stage);border:1px solid var(--line);border-radius:10px;padding:14px}
+#c3{display:block;width:100%;height:clamp(320px,50vw,500px);touch-action:none;cursor:grab;padding:0;border:0}
+.stage{padding:0;overflow:hidden}
+.side{display:flex;flex-direction:column;gap:16px}
+#c2{display:block;width:100%;aspect-ratio:1.25}
+.cap{color:var(--mute);font-size:13px;margin:6px 0 0}
+.type{font-size:20px;font-weight:700}
+.hand{color:var(--mute);margin-bottom:10px}
+.hl{background:var(--hl);border-color:var(--hl);color:#fff}.hl .hand,.hl dt,.hl .cap{color:rgba(255,255,255,.78)}.hl .eq{border-top-color:rgba(255,255,255,.3)}
+dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:0 0 10px}
+dt{color:var(--mute)}dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+.m{font-family:"STIX Two Text",Georgia,serif;font-style:italic}
+.eq{margin:0;padding-top:10px;border-top:1px solid var(--line);font-family:"STIX Two Text",Georgia,serif;font-size:16px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+button{font:inherit;color:var(--ink);background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--wave)}
+button[aria-pressed="true"]{background:var(--wave);border-color:var(--wave);color:#fff}
+button:focus-visible,input:focus-visible{outline:2px solid var(--wave);outline-offset:2px}
+.sl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 24px;margin-bottom:14px}
+.sl label{display:block}
+.sl output{float:right;font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--wave)}
+.row{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.row label{display:flex;align-items:center;gap:8px}
+.row input[type=range]{width:110px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Wave polarization</h1>
+<p class="sub">Drag the 3D view to rotate it. The wave travels along z; the gray ellipse is what an observer at the front end sees.</p>
+
+<div class="grid">
+  <div class="box stage"><canvas id="c3" aria-label="3D view of the electric field vector along the propagation axis"></canvas></div>
+  <div class="side">
+    <div class="box">
+      <canvas id="c2" aria-label="Path traced by the field vector in the E x–E y plane"></canvas>
+      <p class="cap">Looking toward the source (<span class="m">E<sub>x</sub></span>–<span class="m">E<sub>y</sub></span> plane)</p>
+    </div>
+    <div class="box hl">
+      <div class="type" id="type"></div>
+      <div class="hand" id="hand"></div>
+      <dl><dt>Tilt <span class="m">ψ</span></dt><dd id="tilt"></dd><dt>Axial ratio <span class="m">b/a</span></dt><dd id="ar"></dd></dl>
+      <p class="eq">E<sub>x</sub> = A cos(kz − ωt)<br>E<sub>y</sub> = B cos(kz − ωt + δ)</p>
+      <p class="cap">Handedness as seen by an observer facing the source (optics convention).</p>
+    </div>
+  </div>
+</div>
+
+<div class="box">
+  <div class="presets" role="group" aria-label="Presets">
+    <button data-p="lin">Linear</button>
+    <button data-p="cr">Circular (right)</button>
+    <button data-p="cl">Circular (left)</button>
+    <button data-p="el">Elliptical</button>
+  </div>
+  <div class="sl">
+    <label>Amplitude <span class="m">A</span> (E<sub>x</sub>)<output id="oA"></output><input type="range" id="A" min="0" max="1" step="0.05" value="1"></label>
+    <label>Amplitude <span class="m">B</span> (E<sub>y</sub>)<output id="oB"></output><input type="range" id="B" min="0" max="1" step="0.05" value="0.6"></label>
+    <label>Phase difference <span class="m">δ</span><output id="oD"></output><input type="range" id="D" min="-180" max="180" step="5" value="60"></label>
+  </div>
+  <div class="row">
+    <button id="play">Pause</button>
+    <label>Speed <input type="range" id="spd" min="0.1" max="2" step="0.1" value="1"></label>
+    <label><input type="checkbox" id="tc" checked> Components</label>
+    <label><input type="checkbox" id="tv"> Field vectors</label>
+    <button id="rv">Reset view</button>
+    <button id="th">Theme: auto</button>
+  </div>
+</div>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const K=Math.PI, ZE=3.2, ZM=3.6, TAU=Math.PI*2;
+const V0={yaw:-.38,pit:.26};
+const S={A:1,B:.6,d:60,spd:1,t:0,comp:true,vec:false,play:!matchMedia('(prefers-reduced-motion: reduce)').matches,...V0};
+const PRE={lin:[1,1,0],cr:[1,1,-90],cl:[1,1,90],el:[1,.6,60]};
+const c3=$('c3'),c2=$('c2');
+let C={},dirty=true;
+const FONT='Inter,system-ui,sans-serif';
+
+function colors(){const s=getComputedStyle(document.documentElement);
+ for(const n of ['wave','label','gray','dot','cx','cy','ink','mute','line'])C[n]=s.getPropertyValue('--'+n).trim();
+ dirty=true}
+function sz(c){const r=c.getBoundingClientRect();return[r.width,r.height]}
+function fit(){for(const c of[c3,c2]){const[w,h]=sz(c),d=devicePixelRatio||1;c.width=Math.round(w*d);c.height=Math.round(h*d)}dirty=true}
+function lab(ctx,t,s,x,y,n,col){ctx.font=`700 ${n}px ${FONT}`;ctx.fillStyle=col;ctx.textAlign='left';ctx.textBaseline='alphabetic';
+ ctx.fillText(t,x,y);const w=ctx.measureText(t).width;ctx.font=`700 ${n*.62}px ${FONT}`;ctx.fillText(s,x+w+1,y+n*.22)}
+
+function proj(x,y,z,W,H,u){
+ const cy=Math.cos(S.yaw),sy=Math.sin(S.yaw),cp=Math.cos(S.pit),sp=Math.sin(S.pit);
+ const a=z*cy-x*sy,d=z*sy+x*cy,v=y*cp+d*sp,dp=d*cp-y*sp,s=1/(1+dp*.05);
+ return[W/2+a*u*s,H*.5-v*u*s]}
+
+function field(z){const f=K*z-S.t,dr=S.d*Math.PI/180;return[S.A*Math.cos(f),S.B*Math.cos(f+dr)]}
+
+function draw3(){
+ const[W,H]=sz(c3),ctx=c3.getContext('2d'),dpr=devicePixelRatio||1;
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+ const u=Math.min(W*.115,H*.3),P=(x,y,z)=>proj(x,y,z,W,H,u);
+ ctx.lineCap='round';ctx.lineJoin='round';
+ const line=(pts,col,w,al=1)=>{ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.strokeStyle=col;ctx.lineWidth=w;ctx.globalAlpha=al;ctx.stroke();ctx.globalAlpha=1};
+ // axes with ticks
+ const axis=(i,lo,hi,step)=>{const q=t=>i==0?P(t,0,0):i==1?P(0,t,0):P(0,0,t);
+  line([q(lo),q(hi)],C.ink,2);
+  for(let t=Math.ceil(lo/step)*step;t<=hi+1e-6;t+=step){if(Math.abs(t)<1e-6)continue;
+   const a=q(t),b=q(t+.01),dx=b[0]-a[0],dy=b[1]-a[1],m=Math.hypot(dx,dy)||1,n=[-dy/m,dx/m],L=Math.abs(t%1)<1e-6?6:3.5;
+   line([[a[0]-n[0]*L,a[1]-n[1]*L],[a[0]+n[0]*L,a[1]+n[1]*L]],C.ink,1.5)}};
+ axis(2,-ZM,ZM+.2,.4);axis(0,-1.4,1.4,.5);axis(1,-1.4,1.4,.5);
+ const fs=Math.max(22,Math.min(40,W*.05));
+ let p=P(1.55,0,0);lab(ctx,'E','x',p[0]-fs*.1,p[1]-fs*.15,fs,C.label);
+ p=P(0,1.5,0);lab(ctx,'E','y',p[0]-fs*.3,p[1]-fs*.35,fs,C.label);
+ p=P(0,0,ZM+.35);lab(ctx,'z','',p[0]-4,p[1]+fs*.45,fs*.7,C.mute);
+ ctx.font=`400 ${Math.max(11,fs*.34)}px ${FONT}`;ctx.fillStyle=C.mute;ctx.fillText('propagation',p[0]-26,p[1]+fs*.45+16);
+ // sampled curves
+ const N=320,zs=Array.from({length:N+1},(_,i)=>-ZE+i*2*ZE/N),F=zs.map(field);
+ if(S.comp){line(zs.map((z,i)=>P(F[i][0],0,z)),C.cx,1.8,.75);line(zs.map((z,i)=>P(0,F[i][1],z)),C.cy,1.8,.75)}
+ if(S.vec)for(let z=-ZE;z<=ZE+1e-6;z+=.2){const f=field(z);line([P(0,0,z),P(f[0],f[1],z)],C.wave,1.2,.4)}
+ line(zs.map((z,i)=>P(F[i][0],F[i][1],z)),C.wave,3.2);
+ // front end ellipse + dot
+ const dr=S.d*Math.PI/180,ell=[];for(let i=0;i<=120;i++){const f=i/120*TAU;ell.push(P(S.A*Math.cos(f),S.B*Math.cos(f+dr),ZE))}
+ line(ell,C.gray,2.4,.9);
+ const e=field(ZE),q=P(e[0],e[1],ZE);
+ line([P(0,0,ZE),q],C.gray,4);
+ ctx.beginPath();ctx.arc(q[0],q[1],6.5,0,TAU);ctx.fillStyle=C.dot;ctx.fill();
+}
+
+function draw2(){
+ const[W,H]=sz(c2),ctx=c2.getContext('2d'),dpr=devicePixelRatio||1;
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+ const cx=W/2,cy=H/2,u=Math.min(W,H*1.0)*.36,dr=S.d*Math.PI/180,ph=K*ZE-S.t;
+ const pt=f=>[cx+S.A*Math.cos(f)*u,cy-S.B*Math.cos(f+dr)*u];
+ ctx.lineCap='round';
+ const seg=(a,b,col,w,al=1)=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=col;ctx.lineWidth=w;ctx.globalAlpha=al;ctx.stroke();ctx.globalAlpha=1};
+ seg([cx-u*1.25,cy],[cx+u*1.25,cy],C.ink,1.2,.6);seg([cx,cy+u*1.1],[cx,cy-u*1.1],C.ink,1.2,.6);
+ ctx.beginPath();for(let i=0;i<=120;i++){const p=pt(i/120*TAU);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])}
+ ctx.strokeStyle=C.gray;ctx.lineWidth=2;ctx.globalAlpha=.5;ctx.stroke();ctx.globalAlpha=1;
+ const n=36;for(let i=0;i<n;i++)seg(pt(ph+i*.05),pt(ph+(i+1)*.05),C.wave,3.2,1-i/n);
+ const p=pt(ph);seg([cx,cy],p,C.gray,3);
+ ctx.beginPath();ctx.arc(p[0],p[1],6,0,TAU);ctx.fillStyle=C.dot;ctx.fill();
+ const fs=Math.max(16,Math.min(24,W*.07));
+ lab(ctx,'E','x',cx+u*1.25-fs*.4,cy+fs*1.15,fs,C.label);lab(ctx,'E','y',cx+8,cy-u*1.1+fs*.5,fs,C.label);
+}
+
+function info(){
+ const A=S.A,B=S.B,d=S.d*Math.PI/180,sd=Math.sin(d),cd=Math.cos(d),e=.02,deg=r=>r*180/Math.PI;
+ let type,hand='No rotation',tilt='—',ar='—';
+ if(A<e&&B<e){type='No field'}
+ else if(A<e||B<e||Math.abs(sd)<e){type='Linear';let a=deg(Math.atan2(B*(A<e?1:Math.sign(cd)||1)*(B<e?0:1)*(A<e?1:1),A));
+  if(B<e)a=0;else if(A<e)a=90;else a=deg(Math.atan2(B*Math.sign(cd),A));
+  if(a>90)a-=180;if(a<=-90)a+=180;tilt=a.toFixed(0)+'°';ar='0.00'}
+ else{const chi=.5*Math.asin(2*A*B*sd/(A*A+B*B));
+  hand=sd>0?'Left-handed · counter-clockwise':'Right-handed · clockwise';
+  if(Math.abs(A-B)<e&&Math.abs(cd)<e){type='Circular';ar='1.00'}
+  else{type='Elliptical';tilt=deg(.5*Math.atan2(2*A*B*cd,A*A-B*B)).toFixed(0)+'°';ar=Math.abs(Math.tan(chi)).toFixed(2)}}
+ $('type').textContent=type;$('hand').textContent=hand;$('tilt').textContent=tilt.replace('-','−');$('ar').textContent=ar}
+
+function sync(){
+ $('A').value=S.A;$('B').value=S.B;$('D').value=S.d;
+ $('oA').textContent=S.A.toFixed(2);$('oB').textContent=S.B.toFixed(2);
+ $('oD').textContent=(S.d>0?'+':S.d<0?'−':'')+Math.abs(S.d)+'°';
+ for(const b of document.querySelectorAll('[data-p]')){const p=PRE[b.dataset.p];b.setAttribute('aria-pressed',p[0]==S.A&&p[1]==S.B&&p[2]==S.d)}
+ info();dirty=true}
+
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{[S.A,S.B,S.d]=PRE[b.dataset.p];sync()});
+for(const[id,k]of[['A','A'],['B','B'],['D','d']])$(id).oninput=e=>{S[k]=+e.target.value;sync()};
+$('spd').oninput=e=>S.spd=+e.target.value;
+$('tc').onchange=e=>{S.comp=e.target.checked;dirty=true};
+$('tv').onchange=e=>{S.vec=e.target.checked;dirty=true};
+$('play').onclick=()=>{S.play=!S.play;$('play').textContent=S.play?'Pause':'Play'};
+const rv=()=>{S.yaw=V0.yaw;S.pit=V0.pit;dirty=true};$('rv').onclick=rv;c3.ondblclick=rv;
+const TH=[null,'light','dark'];let ti=0;$('th').onclick=()=>{ti=(ti+1)%3;const m=TH[ti];m?document.documentElement.dataset.theme=m:delete document.documentElement.dataset.theme;$('th').textContent='Theme: '+(m||'auto')};
+let drag=null;
+c3.onpointerdown=e=>{drag=[e.clientX,e.clientY];c3.setPointerCapture(e.pointerId);c3.style.cursor='grabbing'};
+c3.onpointermove=e=>{if(!drag)return;S.yaw+=(e.clientX-drag[0])*.008;S.pit=Math.max(-.3,Math.min(1.3,S.pit+(e.clientY-drag[1])*.008));drag=[e.clientX,e.clientY];dirty=true};
+c3.onpointerup=c3.onpointercancel=()=>{drag=null;c3.style.cursor='grab'};
+
+$('play').textContent=S.play?'Pause':'Play';
+new ResizeObserver(fit).observe(c3);new ResizeObserver(fit).observe(c2);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',colors);
+new MutationObserver(colors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts)document.fonts.ready.then(()=>dirty=true);
+colors();fit();sync();
+let last=performance.now();
+(function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;
+ if(S.play){S.t+=dt*TAU*.3*S.spd;dirty=true}
+ if(dirty){draw3();draw2();dirty=false}
+ requestAnimationFrame(frame)})(last);
+})();
+</script>
+</body>
+</html>
