@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -43,6 +43,26 @@ input[type=range]{width:100%;accent-color:var(--wave)}
 .row{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
 .row label{display:flex;align-items:center;gap:8px}
 .row input[type=range]{width:110px}
+@media(min-width:700px) and (min-aspect-ratio:4/3) and (max-height:780px){
+.wrap{max-width:none;height:100vh;padding:10px;display:grid;grid-template-columns:minmax(0,1fr) 270px;grid-template-rows:minmax(0,1fr) auto;gap:10px}
+h1,.sub{display:none}
+.grid{display:contents}
+.box{padding:10px}
+.stage{grid-column:1;grid-row:1;position:relative;min-height:0;padding:0}
+#c3{position:absolute;inset:0;width:100%;height:100%}
+.side{grid-column:2;grid-row:1/3;gap:10px;min-height:0;overflow:auto}
+.ctl{grid-column:1;grid-row:2}
+#c2{aspect-ratio:1.5}
+.type{font-size:18px}
+.hand{margin-bottom:6px;font-size:14px}
+dl{margin-bottom:6px;font-size:14px}
+.eq{padding-top:6px;font-size:15px}
+.hl .cap{display:none}
+.presets{margin-bottom:8px}
+.sl{grid-template-columns:repeat(3,1fr);gap:6px 16px;margin-bottom:8px;font-size:13px}
+.row{gap:8px 14px}
+button{padding:4px 10px}
+}
 </style>
 </head>
 <body>
@@ -67,7 +87,7 @@ input[type=range]{width:100%;accent-color:var(--wave)}
   </div>
 </div>
 
-<div class="box">
+<div class="box ctl">
   <div class="presets" role="group" aria-label="Presets">
     <button data-p="lin">Linear</button>
     <button data-p="cr">Circular (right)</button>
@@ -85,7 +105,7 @@ input[type=range]{width:100%;accent-color:var(--wave)}
     <label><input type="checkbox" id="tc" checked> Components</label>
     <label><input type="checkbox" id="tv"> Field vectors</label>
     <button id="rv">Reset view</button>
-    <button id="th">Theme: auto</button>
+    <button id="th">Theme: light</button>
   </div>
 </div>
 </div>
@@ -191,7 +211,7 @@ $('tc').onchange=e=>{S.comp=e.target.checked;dirty=true};
 $('tv').onchange=e=>{S.vec=e.target.checked;dirty=true};
 $('play').onclick=()=>{S.play=!S.play;$('play').textContent=S.play?'Pause':'Play'};
 const rv=()=>{S.yaw=V0.yaw;S.pit=V0.pit;dirty=true};$('rv').onclick=rv;c3.ondblclick=rv;
-const TH=[null,'light','dark'];let ti=0;$('th').onclick=()=>{ti=(ti+1)%3;const m=TH[ti];m?document.documentElement.dataset.theme=m:delete document.documentElement.dataset.theme;$('th').textContent='Theme: '+(m||'auto')};
+const TH=['light','dark'];let ti=0;$('th').onclick=()=>{ti=(ti+1)%2;const m=TH[ti];document.documentElement.dataset.theme=m;$('th').textContent='Theme: '+m};
 let drag=null;
 c3.onpointerdown=e=>{drag=[e.clientX,e.clientY];c3.setPointerCapture(e.pointerId);c3.style.cursor='grabbing'};
 c3.onpointermove=e=>{if(!drag)return;S.yaw+=(e.clientX-drag[0])*.008;S.pit=Math.max(-.3,Math.min(1.3,S.pit+(e.clientY-drag[1])*.008));drag=[e.clientX,e.clientY];dirty=true};
